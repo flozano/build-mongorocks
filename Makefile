@@ -10,13 +10,6 @@ DEST := "rpm/${TARNAME}"
 clean:
 	rm -rf rpm mongo rocksdb mongo-tools
 
-dependencies:
-	sudo yum -y install snappy-devel zlib-devel bzip2-devel createrepo cyrus-sasl-devel openssl-devel
-
-
-install-scons:
-	test -x "/usr/bin/scons" || sudo rpm -Uvh "http://downloads.sourceforge.net/project/scons/scons/2.3.6/scons-2.3.6-1.noarch.rpm?r=http%3A%2F%2Fwww.scons.org%2Fdownload.php&ts=1440779277&use_mirror=freefr"
-
 clone-rocks:
 	test -d "rocksdb" || git clone https://github.com/facebook/rocksdb.git
 	cd rocksdb; git checkout ${ROCKS_BRANCH}
@@ -54,4 +47,4 @@ package:
 	cd mongo/buildscripts; ./packager.py -s ${VERSION}-rocks  -m `git rev-parse HEAD` -r 1 -d rhel70 -t `realpath ../../rpm/mongo-binary.tar.gz `
 
 
-all: clean dependencies install-scons clone-rocks clone-mongodb clone-mongotools build-rocks install-rocks build-mongotools build-mongodb tarball rpm
+all: clean clone-rocks clone-mongodb clone-mongotools build-rocks install-rocks build-mongotools build-mongodb tarball rpm
