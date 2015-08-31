@@ -1,0 +1,5 @@
+/.vagrant/
+/rpm/
+/mongo/
+/mongo-tools/
+/rocksdb/
