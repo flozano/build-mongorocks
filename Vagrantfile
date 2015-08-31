@@ -4,6 +4,9 @@
 Vagrant.configure(2) do |config|
   config.vm.box = "puppetlabs/centos-7.0-64-nocm"
   config.vm.provider :virtualbox do |vb|
+#### Commented-out because some compilation problems appear when this is enabled,
+#### it seems the compiler is not so stable with these parameters enabled.
+#### (They're marked as unstable in virtualbox docs)
 #    vb.customize ["setextradata", :id, "VBoxInternal/CPUM/SSE4.1","1"]
 #    vb.customize ["setextradata", :id, "VBoxInternal/CPUM/SSE4.2","1"]
     vb.gui = true

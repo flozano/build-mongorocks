@@ -13,6 +13,7 @@ clean:
 dependencies:
 	sudo yum -y install snappy-devel zlib-devel bzip2-devel createrepo cyrus-sasl-devel openssl-devel
 
+
 install-scons:
 	test -x "/usr/bin/scons" || sudo rpm -Uvh "http://downloads.sourceforge.net/project/scons/scons/2.3.6/scons-2.3.6-1.noarch.rpm?r=http%3A%2F%2Fwww.scons.org%2Fdownload.php&ts=1440779277&use_mirror=freefr"
 
@@ -32,7 +33,7 @@ build-rocks:
 	cd rocksdb; USE_SSE=1 make static_lib
 
 build-mongodb: 
-	cd mongo; scons --rocksdb=1 mongod mongo mongos mongoperf
+	cd mongo; scons -j 2 --rocksdb=1 mongod mongo mongos mongoperf
 
 build-mongotools:
 	cd mongo-tools; ./build.sh "ssl sasl"
@@ -49,7 +50,7 @@ tarball:
 	cp mongo-tools/bin/* ${DEST}/bin
 	cd rpm; tar -cvzf mongo-binary.tar.gz ${TARNAME}
 
-rpm:
+package:
 	cd mongo/buildscripts; ./packager.py -s ${VERSION}-rocks  -m `git rev-parse HEAD` -r 1 -d rhel70 -t `realpath ../../rpm/mongo-binary.tar.gz `
 
 
