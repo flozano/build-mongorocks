@@ -1,8 +1,9 @@
 SHELL := $(shell echo $$SHELL)
 
-ROCKS_BRANCH := "mongorocks"
+ROCKS_BRANCH := "rocksdb-3.13"
 MONGO_BRANCH := "v3.0.5-mongorocks"
 MONGOTOOLS_BRANCH := "v3.0"
+RELEASE_VER := "2"
 
 TARNAME := "mongodb-linux-x86_64-${VERSION}"
 DEST := "rpm/${TARNAME}"
@@ -44,7 +45,7 @@ tarball:
 	cd rpm; tar -cvzf mongo-binary.tar.gz ${TARNAME}
 
 package:
-	cd mongo/buildscripts; ./packager.py -s ${VERSION}-rocks  -m `git rev-parse HEAD` -r 1 -d rhel70 -t `realpath ../../rpm/mongo-binary.tar.gz `
+	cd mongo/buildscripts; ./packager.py -s ${VERSION}-rocks  -m `git rev-parse HEAD` -r ${RELEASE_VER} -d rhel70 -t `realpath ../../rpm/mongo-binary.tar.gz `
 
 
 all: clean clone-rocks clone-mongodb clone-mongotools build-rocks install-rocks build-mongotools build-mongodb tarball rpm
