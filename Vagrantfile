@@ -4,8 +4,8 @@
 Vagrant.configure(2) do |config|
   config.vm.box = "puppetlabs/centos-7.0-64-nocm"
   config.vm.provider :virtualbox do |vb|
-    vb.customize ["setextradata", :id, "VBoxInternal/CPUM/SSE4.1","1"]
-    vb.customize ["setextradata", :id, "VBoxInternal/CPUM/SSE4.2","1"]
+#    vb.customize ["setextradata", :id, "VBoxInternal/CPUM/SSE4.1","1"]
+#    vb.customize ["setextradata", :id, "VBoxInternal/CPUM/SSE4.2","1"]
     vb.gui = true
     vb.memory = "1024"
   end
