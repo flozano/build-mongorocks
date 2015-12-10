@@ -1,5 +1,5 @@
 SHELL := $(shell echo $$SHELL)
-
+VERSION := "3.0.7"
 ROCKS_BRANCH := "v4.1"
 MONGO_BRANCH := "v3.0.7-mongorocks"
 MONGOTOOLS_BRANCH := "v3.0"
