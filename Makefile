@@ -1,7 +1,7 @@
 SHELL := $(shell echo $$SHELL)
 
-ROCKS_BRANCH := "rocksdb-3.13"
-MONGO_BRANCH := "v3.0.5-mongorocks"
+ROCKS_BRANCH := "v4.1"
+MONGO_BRANCH := "v3.0.7-mongorocks"
 MONGOTOOLS_BRANCH := "v3.0"
 RELEASE_VER := "2"
 
@@ -23,16 +23,16 @@ clone-mongotools:
 	test -d "mongo-tools" || git clone https://github.com/mongodb/mongo-tools
 	cd mongo-tools; git checkout ${MONGOROCKS_BRANCH}
 
-build-rocks: 
+build-rocks:
 	cd rocksdb; USE_SSE=1 make static_lib
 
-build-mongodb: 
+build-mongodb:
 	cd mongo; scons -j 2 --rocksdb=1 mongod mongo mongos mongoperf
 
 build-mongotools:
 	cd mongo-tools; ./build.sh "ssl sasl"
 
-install-rocks: 
+install-rocks:
 	cd rocksdb; sudo make install
 
 tarball:
@@ -48,4 +48,4 @@ package:
 	cd mongo/buildscripts; ./packager.py -s ${VERSION}-rocks  -m `git rev-parse HEAD` -r ${RELEASE_VER} -d rhel70 -t `realpath ../../rpm/mongo-binary.tar.gz `
 
 
-all: clean clone-rocks clone-mongodb clone-mongotools build-rocks install-rocks build-mongotools build-mongodb tarball rpm
+all: clean clone-rocks clone-mongodb clone-mongotools build-rocks install-rocks build-mongotools build-mongodb tarball package
