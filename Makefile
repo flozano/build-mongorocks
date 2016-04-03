@@ -1,51 +1,59 @@
 SHELL := $(shell echo $$SHELL)
-VERSION := "3.0.7"
-ROCKS_BRANCH := "v4.1"
-MONGO_BRANCH := "v3.0.7-mongorocks"
-MONGOTOOLS_BRANCH := "v3.0"
+VERSION := "3.2.4"
+ROCKS_BRANCH := "4.4.fb"
+MONGO_BRANCH := "r${VERSION}"
+MONGOTOOLS_BRANCH := "v3.2"
 RELEASE_VER := "2"
+BUILD_HOME := "/home/vagrant/build"
 
 TARNAME := "mongodb-linux-x86_64-${VERSION}"
-DEST := "rpm/${TARNAME}"
+DEST := "${BUILD_HOME}/rpm/${TARNAME}"
 
 clean:
-	rm -rf rpm mongo rocksdb mongo-tools
+	rm -rf ${BUILD_HOME}
 
-clone-rocks:
-	test -d "rocksdb" || git clone https://github.com/facebook/rocksdb.git
-	cd rocksdb; git checkout ${ROCKS_BRANCH}
+setup:
+	mkdir -p ${BUILD_HOME}
 
-clone-mongodb:
-	test -d "mongo" || git clone https://github.com/mongodb-partners/mongo.git
-	cd mongo; git checkout ${MONGO_BRANCH}
+clone-rocks: setup
+	test -d "${BUILD_HOME}/rocksdb" || git clone https://github.com/facebook/rocksdb.git ${BUILD_HOME}/rocksdb
+	cd ${BUILD_HOME}/rocksdb; git checkout ${ROCKS_BRANCH}; cd ..
 
-clone-mongotools:
-	test -d "mongo-tools" || git clone https://github.com/mongodb/mongo-tools
-	cd mongo-tools; git checkout ${MONGOROCKS_BRANCH}
+clone-mongodb: setup
+	test -d "${BUILD_HOME}/mongo" || git clone https://github.com/mongodb/mongo.git ${BUILD_HOME}/mongo
+	cd ${BUILD_HOME}/mongo; git checkout ${MONGO_BRANCH}; cd ..
 
-build-rocks:
-	cd rocksdb; USE_SSE=1 make static_lib
+clone-mongorocks: setup clone-mongodb
+	test -d "${BUILD_HOME}/mongo-rocks" || git clone https://github.com/mongodb-partners/mongo-rocks.git ${BUILD_HOME}/mongo-rocks
+	cd ${BUILD_HOME}/mongo-rocks; git checkout ${MONGO_BRANCH}; cd ..
+	cd ${BUILD_HOME}/mongo; mkdir -p src/mongo/db/modules/; ln -sf ${BUILD_HOME}/mongo-rocks src/mongo/db/modules/rocks; cd ..
 
-build-mongodb:
-	cd mongo; scons -j 2 --rocksdb=1 mongod mongo mongos mongoperf
+clone-mongotools: setup clone-mongodb
+	test -d "${BUILD_HOME}/mongo-tools" || git clone https://github.com/mongodb/mongo-tools ${BUILD_HOME}/mongo-tools
+	cd ${BUILD_HOME}/mongo-tools; git checkout ${MONGOTOOLS_BRANCH}; cd ..
 
-build-mongotools:
-	cd mongo-tools; ./build.sh "ssl sasl"
+build-rocks: clone-rocks
+	cd ${BUILD_HOME}/rocksdb; USE_SSE=1 make static_lib; cd ..
 
-install-rocks:
-	cd rocksdb; sudo make install
+build-mongodb: build-rocks clone-mongodb clone-mongorocks
+	cd ${BUILD_HOME}/mongo; scons CPPPATH=${BUILD_HOME}/rocksdb/include LIBPATH=${BUILD_HOME}/rocksdb LIBS=lz4 -j 4 mongod mongo mongos mongoperf; cd ..
 
-tarball:
+build-mongotools: clone-mongotools
+	cd ${BUILD_HOME}/mongo-tools; ./build.sh "ssl sasl"; cd ..
+
+# install-rocks: build-rocks
+#	cd ${BUILD_HOME}/rocksdb; sudo make install; cd ..
+
+tarball: build-mongodb build-mongotools
 	test ! -z "${VERSION}" || exit 123
 	mkdir -p ${DEST}/bin
-	cp mongo/mongo mongo/mongos mongo/mongod mongo/mongoperf ${DEST}/bin
-	cp mongo/README mongo/distsrc/THIRD-PARTY-NOTICES ${DEST}
-	cp mongo/GNU-AGPL-3.0.txt ${DEST}/GNU-AGPL-3.0
-	cp mongo-tools/bin/* ${DEST}/bin
-	cd rpm; tar -cvzf mongo-binary.tar.gz ${TARNAME}
+	cp ${BUILD_HOME}/mongo/mongo ${BUILD_HOME}/mongo/mongos ${BUILD_HOME}/mongo/mongod ${BUILD_HOME}/mongo/mongoperf ${DEST}/bin
+	cp ${BUILD_HOME}/mongo/README ${BUILD_HOME}/mongo/distsrc/THIRD-PARTY-NOTICES ${BUILD_HOME}/mongo/distsrc/MPL-2 ${DEST}
+	cp ${BUILD_HOME}/mongo/GNU-AGPL-3.0.txt ${DEST}/GNU-AGPL-3.0
+	cp ${BUILD_HOME}/mongo-tools/bin/* ${DEST}/bin
+	cd ${BUILD_HOME}/rpm; tar -cvzf ${BUILD_HOME}/mongo-binary.tar.gz ${TARNAME}
 
-package:
-	cd mongo/buildscripts; ./packager.py -s ${VERSION}-rocks  -m `git rev-parse HEAD` -r ${RELEASE_VER} -d rhel70 -t `realpath ../../rpm/mongo-binary.tar.gz `
+package: tarball
+	cd ${BUILD_HOME}/mongo/buildscripts; ./packager.py -s ${VERSION}.rocks  -m `git rev-parse HEAD` -r ${RELEASE_VER} -d rhel70 -t ${BUILD_HOME}/mongo-binary.tar.gz
 
-
-all: clean clone-rocks clone-mongodb clone-mongotools build-rocks install-rocks build-mongotools build-mongodb tarball package
+all: clean setup package
